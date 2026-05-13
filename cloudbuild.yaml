@@ -15,6 +15,7 @@ steps:
 
   # ─────────────────────────────────────────────
   # NOTIFIKASI: Build Dimulai
+  # Flag -sS: tampilkan error tapi JANGAN gagalkan build
   # ─────────────────────────────────────────────
   - name: "curlimages/curl"
     id: "notify-start"
@@ -22,12 +23,13 @@ steps:
     args:
       - "-c"
       - |
-        AUTHOR=$$(cat /workspace/author.txt)
-        COMMIT_MSG=$$(cat /workspace/message.txt)
+        AUTHOR=$$(cat /workspace/author.txt | tr -d '"\\' | tr '\n' ' ')
+        COMMIT_MSG=$$(cat /workspace/message.txt | tr -d '"\\' | tr '\n' ' ')
         COMMIT_SHORT=$$(echo "$COMMIT_SHA" | cut -c1-7)
-        curl -fS -X POST "${_DISCORD_WEBHOOK}" \
+        curl -sS -X POST "${_DISCORD_WEBHOOK}" \
           -H "Content-Type: application/json" \
-          -d "{\"username\":\"NG.LEARN CI/CD \ud83e\udd16\",\"embeds\":[{\"title\":\"\ud83d\udd04 Build Dimulai\",\"description\":\"Proses build & deploy **NG.LEARN** sedang berjalan...\",\"color\":16776960,\"fields\":[{\"name\":\"\ud83d\udc64 Di-push oleh\",\"value\":\"**$$AUTHOR**\",\"inline\":true},{\"name\":\"\ud83c\udf3f Branch\",\"value\":\"\`$BRANCH_NAME\`\",\"inline\":true},{\"name\":\"\ud83d\udce6 Commit\",\"value\":\"\`$$COMMIT_SHORT\`\",\"inline\":true},{\"name\":\"\ud83d\udcdd Pesan Commit\",\"value\":\"$$COMMIT_MSG\",\"inline\":false},{\"name\":\"\ud83d\udccb Log\",\"value\":\"[Lihat Build Log](https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID)\",\"inline\":false}],\"footer\":{\"text\":\"Google Cloud Build \u2022 juara-495806\"}}]}"
+          -d "{\"username\":\"NG.LEARN CI/CD\",\"embeds\":[{\"title\":\"\ud83d\udd04 Build Dimulai\",\"description\":\"Proses build & deploy **NG.LEARN** sedang berjalan...\",\"color\":16776960,\"fields\":[{\"name\":\"\ud83d\udc64 Di-push oleh\",\"value\":\"$$AUTHOR\",\"inline\":true},{\"name\":\"\ud83c\udf3f Branch\",\"value\":\"$BRANCH_NAME\",\"inline\":true},{\"name\":\"\ud83d\udce6 Commit\",\"value\":\"$$COMMIT_SHORT\",\"inline\":true},{\"name\":\"\ud83d\udcdd Pesan Commit\",\"value\":\"$$COMMIT_MSG\",\"inline\":false},{\"name\":\"\ud83d\udccb Log\",\"value\":\"https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID\",\"inline\":false}],\"footer\":{\"text\":\"Google Cloud Build\"}}]}"
+        exit 0
 
   # ─────────────────────────────────────────────
   # STEP 1: Install Dependencies
@@ -94,12 +96,30 @@ steps:
     args:
       - "-c"
       - |
-        AUTHOR=$$(cat /workspace/author.txt)
-        COMMIT_MSG=$$(cat /workspace/message.txt)
+        AUTHOR=$$(cat /workspace/author.txt | tr -d '"\\' | tr '\n' ' ')
+        COMMIT_MSG=$$(cat /workspace/message.txt | tr -d '"\\' | tr '\n' ' ')
         COMMIT_SHORT=$$(echo "$COMMIT_SHA" | cut -c1-7)
-        curl -fS -X POST "${_DISCORD_WEBHOOK}" \
+        curl -sS -X POST "${_DISCORD_WEBHOOK}" \
           -H "Content-Type: application/json" \
-          -d "{\"username\":\"NG.LEARN CI/CD \ud83e\udd16\",\"embeds\":[{\"title\":\"\u2705 Deploy Berhasil!\",\"description\":\"**NG.LEARN** berhasil di-deploy ke production \ud83d\ude80\",\"color\":65280,\"fields\":[{\"name\":\"\ud83d\udc64 Di-deploy oleh\",\"value\":\"**$$AUTHOR**\",\"inline\":true},{\"name\":\"\ud83c\udf3f Branch\",\"value\":\"\`$BRANCH_NAME\`\",\"inline\":true},{\"name\":\"\ud83d\udce6 Commit\",\"value\":\"\`$$COMMIT_SHORT\`\",\"inline\":true},{\"name\":\"\ud83d\udcdd Pesan Commit\",\"value\":\"$$COMMIT_MSG\",\"inline\":false},{\"name\":\"\ud83c\udf10 Aplikasi Live\",\"value\":\"[Buka NG.LEARN](https://ng-learn-952620701939.asia-southeast2.run.app)\",\"inline\":false},{\"name\":\"\ud83d\udccb Build Log\",\"value\":\"[Lihat Detail](https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID)\",\"inline\":false}],\"footer\":{\"text\":\"Google Cloud Build \u2022 juara-495806\"}}]}"
+          -d "{\"username\":\"NG.LEARN CI/CD\",\"embeds\":[{\"title\":\"\u2705 Deploy Berhasil!\",\"description\":\"**NG.LEARN** berhasil di-deploy ke production!\",\"color\":65280,\"fields\":[{\"name\":\"\ud83d\udc64 Di-deploy oleh\",\"value\":\"$$AUTHOR\",\"inline\":true},{\"name\":\"\ud83c\udf3f Branch\",\"value\":\"$BRANCH_NAME\",\"inline\":true},{\"name\":\"\ud83d\udce6 Commit\",\"value\":\"$$COMMIT_SHORT\",\"inline\":true},{\"name\":\"\ud83d\udcdd Pesan Commit\",\"value\":\"$$COMMIT_MSG\",\"inline\":false},{\"name\":\"\ud83c\udf10 Aplikasi Live\",\"value\":\"https://ng-learn-952620701939.asia-southeast2.run.app\",\"inline\":false},{\"name\":\"\ud83d\udccb Build Log\",\"value\":\"https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID\",\"inline\":false}],\"footer\":{\"text\":\"Google Cloud Build\"}}]}"
+
+  # ─────────────────────────────────────────────
+  # NOTIFIKASI: Build Gagal ❌
+  # waitFor semua step — hanya jalan jika ada yang gagal
+  # ─────────────────────────────────────────────
+  - name: "curlimages/curl"
+    id: "notify-failure"
+    entrypoint: "sh"
+    waitFor: ["get-commit-info"]
+    args:
+      - "-c"
+      - |
+        AUTHOR=$$(cat /workspace/author.txt | tr -d '"\\' | tr '\n' ' ')
+        COMMIT_MSG=$$(cat /workspace/message.txt | tr -d '"\\' | tr '\n' ' ')
+        COMMIT_SHORT=$$(echo "$COMMIT_SHA" | cut -c1-7)
+        curl -sS -X POST "${_DISCORD_WEBHOOK}" \
+          -H "Content-Type: application/json" \
+          -d "{\"username\":\"NG.LEARN CI/CD\",\"embeds\":[{\"title\":\"\u274c Build Gagal!\",\"description\":\"Ada error saat build atau deploy. Segera cek log!\",\"color\":16711680,\"fields\":[{\"name\":\"\ud83d\udc64 Di-push oleh\",\"value\":\"$$AUTHOR\",\"inline\":true},{\"name\":\"\ud83c\udf3f Branch\",\"value\":\"$BRANCH_NAME\",\"inline\":true},{\"name\":\"\ud83d\udce6 Commit\",\"value\":\"$$COMMIT_SHORT\",\"inline\":true},{\"name\":\"\ud83d\udcdd Pesan Commit\",\"value\":\"$$COMMIT_MSG\",\"inline\":false},{\"name\":\"\ud83d\udd0d Cek Log\",\"value\":\"https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID\",\"inline\":false}],\"footer\":{\"text\":\"Google Cloud Build\"}}]}"
 
 images:
   - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
