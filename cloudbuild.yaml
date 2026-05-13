@@ -1,32 +1,82 @@
 steps:
-  # Step 1: Install dependencies
+  # ─────────────────────────────────────────────
+  # NOTIFIKASI: Build Dimulai
+  # ─────────────────────────────────────────────
+  - name: "curlimages/curl"
+    id: "notify-start"
+    entrypoint: "curl"
+    args:
+      - "-s"
+      - "-X"
+      - "POST"
+      - "${_DISCORD_WEBHOOK}"
+      - "-H"
+      - "Content-Type: application/json"
+      - "-d"
+      - |
+        {
+          "username": "NG.LEARN CI/CD 🤖",
+          "embeds": [{
+            "title": "🔄 Build Dimulai",
+            "description": "Proses build & deploy **NG.LEARN** sedang berjalan...",
+            "color": 16776960,
+            "fields": [
+              { "name": "📦 Commit", "value": "`$COMMIT_SHA`", "inline": true },
+              { "name": "🌿 Branch", "value": "`$BRANCH_NAME`", "inline": true },
+              { "name": "🔗 Build ID", "value": "`$BUILD_ID`", "inline": false },
+              { "name": "📋 Log", "value": "[Lihat Build Log](https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID)", "inline": false }
+            ],
+            "footer": { "text": "Google Cloud Build • juara-495806" },
+            "timestamp": "$( date -u +%Y-%m-%dT%H:%M:%SZ )"
+          }]
+        }
+
+  # ─────────────────────────────────────────────
+  # STEP 1: Install Dependencies
+  # ─────────────────────────────────────────────
   - name: "node:20"
+    id: "install"
     entrypoint: "npm"
     args: ["ci"]
 
-  # Step 2: Build Next.js production bundle
+  # ─────────────────────────────────────────────
+  # STEP 2: Build Next.js
+  # ─────────────────────────────────────────────
   - name: "node:20"
+    id: "build"
     entrypoint: "npm"
     args: ["run", "build"]
     env:
       - "NODE_ENV=production"
 
-  # Step 3: Build Docker image
+  # ─────────────────────────────────────────────
+  # STEP 3: Build Docker Image
+  # ─────────────────────────────────────────────
   - name: "gcr.io/cloud-builders/docker"
+    id: "docker-build"
     args:
       - "build"
       - "-t"
       - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+      - "-t"
+      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:latest"
       - "."
 
-  # Step 4: Push image to Artifact Registry
+  # ─────────────────────────────────────────────
+  # STEP 4: Push Docker Image
+  # ─────────────────────────────────────────────
   - name: "gcr.io/cloud-builders/docker"
+    id: "docker-push"
     args:
       - "push"
-      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+      - "--all-tags"
+      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn"
 
-  # Step 5: Deploy to Cloud Run using Cloud Build service account
+  # ─────────────────────────────────────────────
+  # STEP 5: Deploy ke Cloud Run
+  # ─────────────────────────────────────────────
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    id: "deploy"
     entrypoint: gcloud
     args:
       - "run"
@@ -37,8 +87,52 @@ steps:
       - "--platform=managed"
       - "--allow-unauthenticated"
 
+  # ─────────────────────────────────────────────
+  # NOTIFIKASI: Build Berhasil ✅
+  # ─────────────────────────────────────────────
+  - name: "curlimages/curl"
+    id: "notify-success"
+    entrypoint: "curl"
+    args:
+      - "-s"
+      - "-X"
+      - "POST"
+      - "${_DISCORD_WEBHOOK}"
+      - "-H"
+      - "Content-Type: application/json"
+      - "-d"
+      - |
+        {
+          "username": "NG.LEARN CI/CD 🤖",
+          "embeds": [{
+            "title": "✅ Deploy Berhasil!",
+            "description": "**NG.LEARN** berhasil di-deploy ke production 🚀",
+            "color": 65280,
+            "fields": [
+              { "name": "📦 Commit", "value": "`$COMMIT_SHA`", "inline": true },
+              { "name": "🌿 Branch", "value": "`$BRANCH_NAME`", "inline": true },
+              { "name": "🌐 URL Live", "value": "[Buka Aplikasi](https://ng-learn-952620701939.asia-southeast2.run.app)", "inline": false },
+              { "name": "📋 Build Log", "value": "[Lihat Detail](https://console.cloud.google.com/cloud-build/builds/$BUILD_ID?project=$PROJECT_ID)", "inline": false }
+            ],
+            "footer": { "text": "Google Cloud Build • juara-495806" },
+            "timestamp": "$( date -u +%Y-%m-%dT%H:%M:%SZ )"
+          }]
+        }
+
 images:
   - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+  - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:latest"
+
+# ─────────────────────────────────────────────
+# Substitusi variabel (Discord webhook disimpan di trigger)
+# ─────────────────────────────────────────────
+substitutions:
+  _DISCORD_WEBHOOK: "https://discord.com/api/webhooks/GANTI_DENGAN_WEBHOOK_ANDA"
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+# ─────────────────────────────────────────────
+# NOTIFIKASI GAGAL: dikirim via Cloud Build Trigger
+# (Diatur di Pub/Sub subscription terpisah)
+# ─────────────────────────────────────────────
