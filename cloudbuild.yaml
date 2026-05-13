@@ -127,7 +127,10 @@ images:
 # Substitusi variabel (Discord webhook disimpan di trigger)
 # ─────────────────────────────────────────────
 substitutions:
-  _DISCORD_WEBHOOK: "https://discordapp.com/api/webhooks/1503961457438490694/rQ-3hzw1a5es-YMEJHjCOFG2n9ys6EbrV7nl4yg2WUS7YiLQAAorVd6B9HV6eV-bRl95"
+  # ⚠️ JANGAN isi nilai ini di sini!
+  # Set via Cloud Build Trigger → Edit → Substitution Variables
+  # Variable: _DISCORD_WEBHOOK | Value: https://discord.com/api/webhooks/...
+  _DISCORD_WEBHOOK: ""
 
 options:
   logging: CLOUD_LOGGING_ONLY
