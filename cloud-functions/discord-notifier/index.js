@@ -63,8 +63,8 @@ async function handleBuildEvent(build) {
     ? Math.round((new Date(build.finishTime) - new Date(build.startTime)) / 1000)
     : null;
 
-  // Hanya kirim notifikasi untuk status tertentu
-  const relevantStatuses = ["FAILURE", "TIMEOUT", "INTERNAL_ERROR", "SUCCESS"];
+  // Hanya kirim notifikasi untuk build yang GAGAL (SUCCESS dihandle oleh cloudbuild.yaml)
+  const relevantStatuses = ["FAILURE", "TIMEOUT", "INTERNAL_ERROR"];
   if (!relevantStatuses.includes(status)) return;
 
   const config = {
