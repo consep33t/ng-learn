@@ -45,8 +45,9 @@ export async function uploadFile(file: File): Promise<string> {
     const blobStream = blob.createWriteStream({
       resumable: false,
       contentType: file.type,
-      // Make the file publicly accessible immediately on upload
-      predefinedAcl: "publicRead",
+      // Note: Do NOT set predefinedAcl here.
+      // This bucket uses uniform IAM access control (allUsers = objectViewer),
+      // so per-object ACLs are disabled. Public access is set at bucket level.
     });
 
     blobStream.on("error", (err) => {
