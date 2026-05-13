@@ -127,7 +127,7 @@ images:
 # Substitusi variabel (Discord webhook disimpan di trigger)
 # ─────────────────────────────────────────────
 substitutions:
-  _DISCORD_WEBHOOK: "https://discord.com/api/webhooks/GANTI_DENGAN_WEBHOOK_ANDA"
+  _DISCORD_WEBHOOK: "https://discordapp.com/api/webhooks/1503961457438490694/rQ-3hzw1a5es-YMEJHjCOFG2n9ys6EbrV7nl4yg2WUS7YiLQAAorVd6B9HV6eV-bRl95"
 
 options:
   logging: CLOUD_LOGGING_ONLY
