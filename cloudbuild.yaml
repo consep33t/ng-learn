@@ -1,0 +1,44 @@
+steps:
+  # Step 1: Install dependencies
+  - name: "node:20"
+    entrypoint: "npm"
+    args: ["ci"]
+
+  # Step 2: Build Next.js production bundle
+  - name: "node:20"
+    entrypoint: "npm"
+    args: ["run", "build"]
+    env:
+      - "NODE_ENV=production"
+
+  # Step 3: Build Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+      - "."
+
+  # Step 4: Push image to Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+
+  # Step 5: Deploy to Cloud Run using Cloud Build service account
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "ng-learn"
+      - "--image=asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+      - "--region=asia-southeast2"
+      - "--platform=managed"
+      - "--allow-unauthenticated"
+
+images:
+  - "asia-southeast2-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ng-learn:$COMMIT_SHA"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

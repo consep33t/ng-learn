@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export default function ContactSection({ settings }: { settings: any }) {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [form, setForm] = useState({ name: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -18,7 +18,7 @@ export default function ContactSection({ settings }: { settings: any }) {
       });
       if (res.ok) {
         setSuccess(true);
-        setForm({ name: "", email: "", message: "" });
+        setForm({ name: "", phone: "", message: "" });
         setTimeout(() => setSuccess(false), 5000);
       }
     } catch (err) {
@@ -112,13 +112,13 @@ export default function ContactSection({ settings }: { settings: any }) {
                     />
                   </div>
                   <div className="form-control">
-                    <label className="label label-text font-bold text-neutral">Email / WhatsApp</label>
+                    <label className="label label-text font-bold text-neutral">No. WhatsApp / Telepon</label>
                     <input
                       type="text"
-                      placeholder="Contoh: 0812xxxx atau budi@mail.com"
+                      placeholder="Contoh: 0812-3456-7890"
                       className="input input-bordered rounded-xl focus:input-primary w-full bg-slate-50 border-slate-200"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      value={form.phone}
+                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       required
                     />
                   </div>
